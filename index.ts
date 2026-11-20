@@ -156,8 +156,18 @@ export default function (pi: ExtensionAPI) {
   };
 
   const place = async (host: string | undefined, session: string, placement: Placement, label: string, layout: object) => {
-    if (placement === "float") return api(host, session, "session.new_layer", { bounds: [0.1, 0.1, 0.8, 0.6], layout, focus: false });
-    const anchor = !host && session === process.env.REX_SESSION ? process.env.REX_BLOCK : undefined;
+    const local = !host && session === process.env.REX_SESSION;
+    const anchor = local ? process.env.REX_BLOCK : undefined;
+    if (placement === "float") {
+      let window_id: string | undefined;
+      if (local) {
+        if (!anchor) throw new Error("Could not identify the parent Rex pane (REX_BLOCK is missing).");
+        const { block } = await api(host, session, "session.describe_block", { block_id: anchor });
+        window_id = block.window_id;
+        if (!window_id) throw new Error("The parent Rex pane is not in a tab.");
+      }
+      return api(host, session, "session.new_layer", { window_id, bounds: [0.1, 0.1, 0.8, 0.6], layout, focus: false });
+    }
     if (placement === "split" && anchor) return api(host, session, "session.new_split", { anchor_id: anchor, direction: "vertical", side: "after", layout, focus: false });
     return api(host, session, "session.new_window", { window_label: label, layout, focus: false });
   };
