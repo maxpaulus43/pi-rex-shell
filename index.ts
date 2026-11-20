@@ -76,7 +76,7 @@ export default function (pi: ExtensionAPI) {
   };
 
   const tell = (content: string) =>
-    pi.sendMessage({ customType: "rex-shell-job", content, display: true }, { triggerTurn: true, deliverAs: "followUp" });
+    pi.sendMessage({ customType: "rex-shell-job", content, display: true }, { triggerTurn: true, deliverAs: "steer" });
 
   const finish = async (j: Job, code: number | undefined) => {
     if (j.status !== "running") return; // stopped by us
