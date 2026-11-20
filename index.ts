@@ -66,7 +66,7 @@ export default function (pi: ExtensionAPI) {
 
   const showStatus = () => {
     const running = [...jobs.values()].filter((j) => j.status === "running");
-    ui?.setStatus("rex-shell", running.length ? `jobs: ${running.map((j) => `#${j.id} ${j.title.slice(0, 20)}`).join(", ")}` : undefined);
+    ui?.setWidget("rex-shell", running.length ? [`Rex jobs: ${running.map((j) => `#${j.id} ${j.title.slice(0, 20)}`).join(", ")}`] : undefined);
   };
 
   const summary = (j: Job) => {
@@ -155,17 +155,18 @@ export default function (pi: ExtensionAPI) {
     name: "shell_job",
     label: "Shell Job",
     description:
-      "Run a shell command in its own Rex pane, in the background. start returns at once with a job id; the exit code and output arrive later as a message. The user can watch and type in the pane. A successful job closes its pane; a failed one stays open. Use send to type into a running job (answer a prompt, or key ctrl+c). Use for tests, builds, servers, and watches.",
-    promptSnippet: "Run background shell commands in Rex panes; results arrive automatically",
+      "Run a shell command in a separate interactive terminal. start returns at once with a job id; the exit code and output arrive later as a message. The user can watch and type in the terminal. It closes on success and stays open on failure. Use send to answer a prompt or press ctrl+c. Use for tests, builds, servers, and watches.",
+    promptSnippet: "Run background shell commands in a separate interactive terminal; results arrive automatically",
     promptGuidelines: [
-      "Use shell_job for long commands, servers, and watches. Results arrive automatically; do not poll with status. Use checkAfterSeconds for a one-time progress check.",
+      'Use shell_job with action "start" for tests, builds, installs, servers, watches, and interactive commands, even if they are expected to finish quickly. Use bash for short commands whose output you need before the next step, such as git status or rg.',
+      "shell_job results arrive automatically; do not poll with status. Use checkAfterSeconds for a one-time progress check.",
     ],
     parameters: Type.Object({
       action: StringEnum(["start", "status", "stop", "send"] as const),
       command: Type.Optional(Type.String({ description: "start: shell command, run with bash -c" })),
       title: Type.Optional(Type.String({ description: "start: short name" })),
-      placement: Type.Optional(StringEnum(["window", "split", "float"] as const, { description: "start: where the pane opens. Default: window (a new unfocused tab)" })),
-      host: Type.Optional(Type.String({ description: "start: Rex host label to run on another machine (see `rex hosts`)" })),
+      placement: Type.Optional(StringEnum(["window", "split", "float"] as const, { description: "start: terminal layout. A float starts minimized. Omit to use the session default" })),
+      host: Type.Optional(Type.String({ description: "start: host label for running on another machine" })),
       cwd: Type.Optional(Type.String({ description: "start: working directory. Default: this one (home on other hosts)" })),
       id: Type.Optional(Type.Integer({ description: "Job id for status, stop, and send" })),
       text: Type.Optional(Type.String({ description: "send: text to type" })),
@@ -188,17 +189,27 @@ export default function (pi: ExtensionAPI) {
         const id = ++lastId; // taken before any await, so parallel starts get different ids
         const title = p.title ?? p.command.slice(0, 60);
         const session = await ownSession(p.host);
+        const placement = (p.placement as Placement | undefined) ?? (!p.host && process.env.REX_SESSION ? "float" : "window");
         const layout = {
           block: { flavor: SHELL, label: `#${id} ${title}`, options: { command: ["bash", "-c", p.command], cwd, interactive: true, exit: { on_completion: false } } },
         };
-        const r = await place(p.host, session, (p.placement as Placement | undefined) ?? "window", `#${id} ${title}`, layout);
+        const r = await place(p.host, session, placement, `#${id} ${title}`, layout);
         const j: Job = { id, title, command: p.command, cwd, host: p.host, session, block: r.block_ids[0], started: Date.now(), status: "running" };
         jobs.set(id, j);
         save(j);
         wait(j);
         if (p.checkAfterSeconds) check(j, p.checkAfterSeconds);
         showStatus();
-        return text(`Started job ${id} (${title}) in a ${p.placement ?? "window"}${p.host ? ` on ${p.host}` : ""}. The result arrives automatically.`);
+        let where: string = placement;
+        if (placement === "float") {
+          try {
+            await api(p.host, session, "session.set_layer_state", { layer_id: r.layer_id, state: "minimized" });
+            where = "minimized float";
+          } catch {
+            where = "float (could not minimize)";
+          }
+        }
+        return text(`Started job ${id} (${title}) in a ${where}${p.host ? ` on ${p.host}` : ""}. The result arrives automatically.`);
       }
 
       if (p.action === "status") {
