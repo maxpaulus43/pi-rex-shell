@@ -19,7 +19,7 @@ Only the pi that starts jobs needs this extension. It does not need to be instal
 | `send` | `id`, `text`, `key` | Types text into a running job and/or presses a key (`enter`, `ctrl+c`). |
 | `stop` | `id` | Closes the job's pane, which ends the command. |
 
-Pi lists running jobs just above the input. Local jobs started from inside Rex default to named, minimized floating panes. Other jobs default to a new tab. Set `placement` to choose a different layout.
+Pi lists running jobs just above the input. In fullscreen mode, click a job to bring its terminal forward and focus it. Local jobs started from inside Rex default to named, minimized floating panes. Other jobs default to a new tab. Set `placement` to choose a different layout.
 
 When a job ends:
 

@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { stripVTControlCharacters } from "node:util";
 import { StringEnum } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { MouseRegion, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 const REX = process.env.REX_BIN_DIR ? `${process.env.REX_BIN_DIR}/rex` : "rex";
@@ -66,7 +67,34 @@ export default function (pi: ExtensionAPI) {
 
   const showStatus = () => {
     const running = [...jobs.values()].filter((j) => j.status === "running");
-    ui?.setWidget("rex-shell", running.length ? [`Rex jobs: ${running.map((j) => `#${j.id} ${j.title.slice(0, 20)}`).join(", ")}`] : undefined);
+    if (!running.length) return ui?.setWidget("rex-shell", undefined);
+    ui?.setWidget("rex-shell", (_tui, theme) => {
+      const heading = "Rex jobs:";
+      let end = visibleWidth(heading);
+      const links = running.map((job) => {
+        const title = stripVTControlCharacters(job.title).replace(/\p{Cc}/gu, " ").slice(0, 20);
+        const label = `#${job.id} ${title}`;
+        const start = end + 1;
+        end = start + visibleWidth(label);
+        return { job, label, start, end };
+      });
+      // Pi mounts the widget in a plain Container, which dispatches to the row, not its children.
+      return new MouseRegion({
+        render: (width) => [truncateToWidth([heading, ...links.map(({ label }) => theme.fg("accent", label))].join(" "), width)],
+        invalidate() {},
+      }, (event) => {
+        if (event.button !== "left") return;
+        const job = links.find(({ start, end }) => event.x >= start && event.x < end)?.job;
+        if (job?.status !== "running") return;
+        if (event.type === "press") return { handled: true, render: false };
+        if (event.type !== "click") return;
+        // Focusing a block also restores and raises its minimized layer.
+        void api(job.host, job.session, "session.focus_block", { block_id: job.block }).catch(() => {
+          ui?.notify(`Could not focus job #${job.id}.`, "warning");
+        });
+        return { handled: true };
+      });
+    });
   };
 
   const summary = (j: Job) => {
