@@ -1,39 +1,39 @@
 {
-  "name": "@maxpaulus/pi-rex-shell",
-  "version": "0.1.0",
-  "type": "module",
-  "description": "Background shell jobs in Rex panes.",
-  "license": "MIT",
-  "keywords": [
-    "pi-package",
-    "pi",
-    "rex",
-    "jobs"
-  ],
-  "files": [
-    "index.ts"
-  ],
-  "pi": {
-    "extensions": [
-      "./index.ts"
-    ]
-  },
-  "scripts": {
-    "test": "node --experimental-strip-types --test test.mjs",
-    "check": "tsc --noEmit --strict --skipLibCheck --target es2022 --module nodenext --moduleResolution nodenext index.ts"
-  },
-  "peerDependencies": {
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-coding-agent": "*",
-    "@earendil-works/pi-tui": "*",
-    "typebox": "*"
-  },
-  "devDependencies": {
-    "@types/node": "^22.20.5",
-    "typescript": "^5.9.3"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/maxpaulus43/pi-rex-shell"
-  }
+    "name": "@maxpaulus/pi-rex-shell",
+    "version": "0.2.0",
+    "type": "module",
+    "description": "Background shell jobs in Rex panes.",
+    "license": "MIT",
+    "keywords": [
+        "pi-package",
+        "pi",
+        "rex",
+        "jobs"
+    ],
+    "files": [
+        "index.ts"
+    ],
+    "pi": {
+        "extensions": [
+            "./index.ts"
+        ]
+    },
+    "scripts": {
+        "test": "node --experimental-strip-types --test test.mjs",
+        "check": "tsc --noEmit --strict --skipLibCheck --target es2022 --module nodenext --moduleResolution nodenext index.ts"
+    },
+    "peerDependencies": {
+        "@earendil-works/pi-ai": "*",
+        "@earendil-works/pi-coding-agent": "*",
+        "@earendil-works/pi-tui": "*",
+        "typebox": "*"
+    },
+    "devDependencies": {
+        "@types/node": "^22.20.5",
+        "typescript": "^5.9.3"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/maxpaulus43/pi-rex-shell"
+    }
 }
