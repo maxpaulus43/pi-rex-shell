@@ -2,6 +2,10 @@
 
 Background shell jobs for pi, each in its own Rex pane. You can watch a job and type into it. The exit code and output come back to pi as a message.
 
+
+https://github.com/user-attachments/assets/f3b51c15-a99f-4e26-95c1-556d15b05a26
+
+
 ## Install
 
 From the repository root, run:
