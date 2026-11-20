@@ -4,8 +4,10 @@ Background shell jobs for pi, each in its own Rex pane. You can watch a job and 
 
 ## Install
 
+From the repository root, run:
+
 ```sh
-pi install /Users/maxpaulus/c/pi-rex-shell
+pi install "$PWD"
 ```
 
 Only the pi that starts jobs needs this extension. It does not need to be installed on remote hosts.
