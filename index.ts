@@ -148,7 +148,8 @@ export default function (pi: ExtensionAPI) {
   };
 
   const ownSession = async (host: string | undefined) => {
-    if (!host && process.env.REX_SESSION) return process.env.REX_SESSION;
+    // Rex sets REX_BLOCK in the pane it opens, so ask which session that pane is in.
+    if (!host && process.env.REX_BLOCK) return JSON.parse(await rex(host, ["block", "inspect", process.env.REX_BLOCK, "--json"])).session_id as string;
     const { sessions } = JSON.parse(await rex(host, ["ls", "--json"]));
     const found = sessions.find((s: any) => s.label === "pi-jobs");
     if (found) return found.session_id as string;
@@ -156,7 +157,7 @@ export default function (pi: ExtensionAPI) {
   };
 
   const place = async (host: string | undefined, session: string, placement: Placement, label: string, layout: object) => {
-    const local = !host && session === process.env.REX_SESSION;
+    const local = !host && Boolean(process.env.REX_BLOCK);
     const anchor = local ? process.env.REX_BLOCK : undefined;
     if (placement === "float") {
       let window_id: string | undefined;
@@ -227,7 +228,7 @@ export default function (pi: ExtensionAPI) {
         const id = ++lastId; // taken before any await, so parallel starts get different ids
         const title = p.title ?? p.command.slice(0, 60);
         const session = await ownSession(p.host);
-        const placement = (p.placement as Placement | undefined) ?? (!p.host && process.env.REX_SESSION ? "float" : "window");
+        const placement = (p.placement as Placement | undefined) ?? (!p.host && process.env.REX_BLOCK ? "float" : "window");
         const layout = {
           block: { flavor: SHELL, label: `#${id} ${title}`, options: { command: ["bash", "-c", p.command], cwd, interactive: true, exit: { on_completion: false } } },
         };

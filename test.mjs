@@ -16,7 +16,7 @@ test("tail cleans and keeps the end", () => {
 });
 
 test("local floating jobs target the Pi pane's tab, not the active tab", async (t) => {
-  for (const [key, value] of Object.entries({ REX_SESSION: "session:test", REX_BLOCK: "block:parent" })) {
+  for (const [key, value] of Object.entries({ REX_BLOCK: "block:parent" })) {
     const previous = process.env[key];
     process.env[key] = value;
     t.after(() => {
@@ -29,7 +29,12 @@ test("local floating jobs target the Pi pane's tab, not the active tab", async (
   extension({
     on() {},
     registerTool: (tool) => { execute = tool.execute; },
-    async exec(_bin, [, , , session, method, json]) {
+    async exec(_bin, args) {
+      if (args[0] === "block") {
+        assert.deepEqual(args, ["block", "inspect", "block:parent", "--json"]);
+        return { code: 0, stdout: JSON.stringify({ session_id: "session:test" }) };
+      }
+      const [, , , session, method, json] = args;
       assert.equal(session, "session:test");
       const body = JSON.parse(json);
       if (method === "session.describe_block") {
